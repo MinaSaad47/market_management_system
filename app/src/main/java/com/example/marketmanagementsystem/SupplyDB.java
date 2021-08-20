@@ -8,6 +8,8 @@ import android.database.SQLException;
 import android.database.sqlite.SQLiteDatabase;
 import android.database.sqlite.SQLiteOpenHelper;
 
+import java.util.ArrayList;
+
 public class SupplyDB {
     public static final String KEY_ROWID = "_id";
     public static final String KEY_NAME = "_name";
@@ -61,8 +63,8 @@ public class SupplyDB {
             sqLiteDatabase.execSQL(sqlCode);
 
             for (int i = 0; i < itemsName.length; i++) {
-                sqLiteDatabase.execSQL("INSERT INTO " + DATABASE_TABLE + " VALUES(" +
-                        itemsName[i] + ", 0, 0);");
+                sqLiteDatabase.execSQL("INSERT INTO " + DATABASE_TABLE + " VALUES(\"" +
+                        itemsName[i] + "\" , \"0\", \"0\");");
             }
 
         }
@@ -94,24 +96,20 @@ public class SupplyDB {
         return ourDatabase.insert(DATABASE_TABLE, null, cv);
     }
 
-    public String getData() {
-        String [] cols = new String[] {KEY_ROWID, KEY_NAME, KEY_PRICE, KEY_QUANTITY};
+    public ArrayList<String> getData() {
+        ArrayList<String> result = new ArrayList<String>();
+        String [] cols = new String[] {KEY_NAME, KEY_PRICE, KEY_QUANTITY};
 
         Cursor cursor = ourDatabase.query(DATABASE_TABLE, cols,
                 null, null, null, null, null);
 
-        String result = "";
-
-        int iRowID = cursor.getColumnIndex(KEY_ROWID);
         int iName = cursor.getColumnIndex(KEY_NAME);
         int iPrice = cursor.getColumnIndex(KEY_PRICE);
         int iQuantity = cursor.getColumnIndex(KEY_QUANTITY);
 
         for (cursor.moveToFirst(); !cursor.isAfterLast(); cursor.moveToNext()) {
-            result = result + cursor.getString(iRowID) + ": " +
-                    cursor.getString(iName) + " " +
-                    cursor.getString(iPrice) +  " " +
-                    cursor.getString(iQuantity) + "\n";
+            result.add(cursor.getString(iName) + ": " + cursor.getString(iPrice) + " LE, " +
+                    cursor.getString(iQuantity) + " Items");
         }
         return result;
     }
@@ -121,8 +119,9 @@ public class SupplyDB {
 
         int oldQuantity = 0;
 
-        String sqlCode = "SELECT QUANTITY FROM " + DATABASE_TABLE + " WHERE NAME=?";
-        Cursor cursor = ourDatabase.rawQuery(sqlCode, new String[]{name});
+        String sqlCode = "SELECT " + KEY_QUANTITY + " FROM " + DATABASE_TABLE + " WHERE " + KEY_NAME +
+                "=\"" + name + "\"";
+        Cursor cursor = ourDatabase.rawQuery(sqlCode, null);
 
         int quantityIndex = cursor.getColumnIndex(KEY_QUANTITY);
 
@@ -132,8 +131,9 @@ public class SupplyDB {
 
         oldQuantity += Integer.parseInt(quantity);
 
-        sqlCode = "UPDATE " + DATABASE_TABLE + " SET " + KEY_QUANTITY + "=" +
-                Integer.toString(oldQuantity) + " WHERE NAME=" + name + ";";
+        sqlCode = "UPDATE " + DATABASE_TABLE + " SET " + KEY_PRICE + "=\"" + price + "\", "
+                + KEY_QUANTITY + "=\"" + Integer.toString(oldQuantity) + "\" WHERE " +
+                KEY_NAME + "=\"" + name + "\";";
 
         ourDatabase.execSQL(sqlCode);
     }
